@@ -83,12 +83,6 @@ export class Assignment4 extends Scene {
 
         let t = program_state.animation_time / 1000;
         let dt = program_state.animation_delta_time / 1000;
-        let model_transform = Mat4.identity();
-        let cube1_transform = Mat4.translation(-2,0,0);
-        let cube2_transform = Mat4.translation(2,0,0)
-        // If rotation is toggled on --> rotate both cubes
-        let stop_time = 0;
-        let just_rotated = false;
 
         if (this.isRotating) {
             let theta1 = ((Math.PI / 3)) * dt;
