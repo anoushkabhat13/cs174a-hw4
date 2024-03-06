@@ -33,13 +33,13 @@ export class Assignment4 extends Scene {
             phong: new Material(new Textured_Phong(), {
                 color: hex_color("#ffffff"),
             }),
-            texture: new Material(new Textured_Phong(), {
+            texture: new Material(new Texture_Rotate(), {
                 //color: hex_color("#ffffff"),
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
                 ambient_color: hex_color("#000000"),
                 texture: new Texture("assets/stars.png", "NEAREST")
             }),
-            texture2: new Material(new Textured_Phong(), {
+            texture2: new Material(new Texture_Scroll_X(), {
                 //color: hex_color("#ffffff"),
                 ambient: 1, diffusivity: 0.1, specularity: 0.1,
                 texture: new Texture("assets/earth.gif", "LINEAR_MIPMAP_LINEAR")
@@ -77,9 +77,11 @@ export class Assignment4 extends Scene {
         //let box_transform = Mat4.scale(2,2,2).times(model_transform);
         // this.shapes.box_1.draw(context, program_state, box_transform, this.materials.texture);
 
-        this.shapes.box_2.arrays.texture_coord.forEach(
-            (v, i, l) => v[1] = v[1] *2
-        )
+        this.shapes.box_2.arrays.texture_coord.forEach((v, i, l) => {
+            v[0] *= 2; // Multiply the s coordinate by 2
+            v[1] *= 2; // Multiply the t coordinate by 2
+        });
+
 
         let t = program_state.animation_time / 1000;
         let dt = program_state.animation_delta_time / 1000;
@@ -120,7 +122,31 @@ class Texture_Scroll_X extends Textured_Phong {
             
             void main(){
                 // Sample the texture image in the correct place:
-                vec4 tex_color = texture2D( texture, f_tex_coord);
+                // vec4 tex_color = texture2D( texture, f_tex_coord);
+                
+                /*
+                float slide_trans = mod(animation_time, 4.0); // Translate by 2 texture units per second
+                vec2 new_tex_coord = vec2(f_tex_coord.s - slide_trans, f_tex_coord.t);
+                vec4 tex_color = texture2D(texture, new_tex_coord.xy);
+                */
+                
+                
+                 /*
+                float slide_trans = mod(animation_time, 4.) * 1.; 
+                mat4 slide_matrix = mat4(vec4(-1., 0., 0., 0.), 
+                                   vec4( 0., 1., 0., 0.), 
+                                   vec4( 0., 0., 1., 0.), 
+                                   vec4(slide_trans, 0., 0., 1.)); 
+
+                vec4 new_tex_coord = vec4(f_tex_coord, 0, 0) + vec4(1., 1., 0., 1.); 
+                new_tex_coord = slide_matrix * new_tex_coord; 
+                vec4 tex_color = texture2D(texture, new_tex_coord.xy);
+                */
+                
+                
+                vec2 new_tex_coord = vec2(f_tex_coord.s - animation_time * 2.0, f_tex_coord.t);
+                vec4 tex_color = texture2D(texture, new_tex_coord.xy);
+               
                 
                 if( tex_color.w < .01 ) discard;
                                                                          // Compute an initial (ambient) color:
@@ -141,8 +167,18 @@ class Texture_Rotate extends Textured_Phong {
             uniform float animation_time;
             void main(){
                 // Sample the texture image in the correct place:
-                vec4 tex_color = texture2D( texture, f_tex_coord );
+                // vec4 tex_color = texture2D( texture, f_tex_coord );
                 
+                
+                float theta = 3.14159265 * 0.66667 * mod(animation_time, 4.0); 
+                mat2 rotation_matrix = mat2(cos(theta), -sin(theta),
+                                             sin(theta), cos(theta));
+                vec2 new_tex_coord = f_tex_coord - 0.5;
+                new_tex_coord = (rotation_matrix * new_tex_coord) + 0.5;       
+                vec4 tex_color = texture2D(texture, new_tex_coord);
+                
+                
+
                 if( tex_color.w < .01 ) discard;
                                                                          // Compute an initial (ambient) color:
                 gl_FragColor = vec4( ( tex_color.xyz + shape_color.xyz ) * ambient, shape_color.w * tex_color.w ); 
